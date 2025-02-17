@@ -2,6 +2,7 @@ import Head from "next/head";
 import Form from 'next/form'
 import { Geist, Geist_Mono } from "next/font/google";
 import styles from "@/styles/Home.module.css";
+import { useEffect } from "react";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,6 +15,14 @@ const geistMono = Geist_Mono({
 });
 
 export default function Home() {
+  useEffect(() => {
+    fetch("http://localhost:3001/")
+      .then((res) => {
+        console.log(res)
+        return res.text()
+      })
+      .then((res) => { console.log(res)})
+  }, [])
   return (
     <>
       <Head>
