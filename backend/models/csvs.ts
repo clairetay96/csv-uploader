@@ -1,7 +1,11 @@
-const mongoose = require("mongoose");
+import mongoose from 'mongoose'
 
-const CsvSchema = new mongoose.Schema({
-  name: {
+const CsvRowSchema = new mongoose.Schema({
+  csvName: {
+    type: String,
+    required: true,
+  },
+  csvId: {
     type: String,
     required: true,
   },
@@ -9,10 +13,25 @@ const CsvSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
-  rows: {
+  data: {
     required: true,
-    type: Array
+    type: Object,
+  },
+  valuesAsString: {
+    type: String,
+  },
+  rowNumber: {
+    type: Number,
+    required: true,
   }
 });
 
-export const Csv = mongoose.model("Csv", CsvSchema);
+CsvRowSchema.index({ valuesAsString: 'text'})
+CsvRowSchema.index({ csvId: 1 })
+
+export const Csv = mongoose.model("Csv", CsvRowSchema);
+Csv.createIndexes()
+// Create collection of Model 
+Csv.createCollection().then(function (collection) { 
+  console.log('Collection is created!'); 
+});

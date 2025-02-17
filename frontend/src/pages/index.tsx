@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export default function Home() {
-  const [selectedFile, setSelectedFile] = useState<any>(null);
+  const [selectedFile, setSelectedFile] = useState<Blob>();
   useEffect(() => {
     fetch("http://localhost:3001/")
       .then((res) => {
@@ -26,6 +26,10 @@ export default function Home() {
   }, [])
 
   const submitForm = (event: FormEvent) => {
+    if (typeof selectedFile === 'undefined') {
+      alert("File Upload Error")
+      return
+    } 
     event.preventDefault()
     const formData = new FormData();
     formData.append("file", selectedFile);
@@ -33,10 +37,10 @@ export default function Home() {
     fetch('http://localhost:3001/upload-csv', { method: "POST", body: formData })
       .then((res) => {
         alert("File Upload success");
-        return res.text()
+        return res.json()
       })
       .then((res) => { console.log(res)})
-      .catch((err) => alert("File Upload Error"));
+      .catch(() => alert("File Upload Error"));
   };
   return (
     <>
