@@ -1,10 +1,11 @@
-const express = require('express')
-const cors = require('cors')
-const fs = require('fs')
-const multer = require('multer');
-const path = require('path')
-const csv = require('fast-csv');
-const mongoose = require('mongoose')
+import express from 'express'
+import cors from 'cors'
+import * as fs from 'fs'
+import multer from 'multer'
+import * as path from 'path'
+import * as csv from 'fast-csv'
+import mongoose from 'mongoose'
+import progress from 'progress-stream'
 
 const app = express();
 const PORT = 3001;
@@ -24,13 +25,24 @@ const upload = multer({ dest: 'tmp/csv/' });
 app.post('/upload-csv', cors(), upload.single('file'), function (req, res) {
     const fileRows = []
     // open uploaded file
+    const filePath = req.file?.path ?? ''
 
-    fs.createReadStream(path.resolve(req.file.path))
+    const stat = fs.statSync(path.resolve(filePath))
+    var str = progress({
+        length: stat.size,
+        time: 100 /* ms */
+    });
+
+    str.on('progress', function(progress) {
+        console.log(progress)
+    })
+
+    fs.createReadStream(path.resolve(filePath))
+      .pipe(str)
       .pipe(csv.parse({ headers: true }))
-      .on('data', (row) => console.log(row))
+      .on('data', (row) => {})
       .on('end', (rowCount) => {
-        console.log(req.file.path)
-        fs.unlink(req.file.path, (err) => {
+        fs.unlink(filePath, (err) => {
             if (err) throw err;
             console.log('file was deleted');
         }); 

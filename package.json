@@ -6,9 +6,16 @@
     "mongoose": "^8.10.1",
     "multer": "^1.4.5-lts.1",
     "next": "^15.1.7",
-    "node": "^23.8.0"
+    "node": "^23.8.0",
+    "progress-stream": "^2.0.0"
   },
+  "type": "module",
   "devDependencies": {
-    "@types/node": "^22.13.4"
+    "@types/express": "^5.0.0",
+    "@types/multer": "^1.4.12",
+    "@types/node": "^22.13.4",
+    "@types/progress-stream": "^2.0.5",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
   }
 }
