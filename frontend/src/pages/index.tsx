@@ -3,6 +3,7 @@ import Form from 'next/form'
 import { Geist, Geist_Mono } from "next/font/google";
 import styles from "@/styles/Home.module.css";
 import { FormEvent, useEffect, useState } from "react";
+import { useRouter } from "next/router";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -25,6 +26,8 @@ export default function Home() {
       .then((res) => { console.log(res)})
   }, [])
 
+  const router = useRouter()
+
   const submitForm = (event: FormEvent) => {
     if (typeof selectedFile === 'undefined') {
       alert("File Upload Error")
@@ -35,11 +38,10 @@ export default function Home() {
     formData.append("file", selectedFile);
   
     fetch('http://localhost:3001/upload-csv', { method: "POST", body: formData })
-      .then((res) => {
-        alert("File Upload success");
-        return res.json()
+      .then((res) => res.json())
+      .then((res) => { 
+        router.push(`/${res.csvId}`)
       })
-      .then((res) => { console.log(res)})
       .catch(() => alert("File Upload Error"));
   };
   return (

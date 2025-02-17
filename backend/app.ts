@@ -22,6 +22,29 @@ app.get('/', cors(), (req, res)=>{
     res.send("Welcome to root URL of Server");
 });
 
+
+app.get('/:id', cors(), async (req, res) => {
+    const csvId = req.params.id
+    const { page, search } = req.query
+
+    const filter = { csvId }
+    if (search) {
+        filter['$text'] = { $search : search }
+    }
+
+    const skipNumber = isNaN(Number(page)) ? 0 : (Number(page) - 1) * 50
+
+    const rows = await Csv
+                .find(filter)
+                .sort({ rowNumber: 1 })
+                .skip(skipNumber)
+                .limit(50)
+
+    res.status(200)
+    res.send({ rows, headers: rows[0] ? Object.keys(rows[0].data) : [] })
+
+
+})
 const upload = multer({ dest: 'tmp/csv/' });
 
 app.post('/upload-csv', cors(), upload.single('file'), async function (req, res) {
@@ -68,7 +91,7 @@ app.post('/upload-csv', cors(), upload.single('file'), async function (req, res)
                 .limit(50)
 
             res.status(200)
-            res.send({ rows })
+            res.send({ rows, csvId })
         });
     })
 
