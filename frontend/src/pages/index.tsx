@@ -2,7 +2,7 @@ import Head from "next/head";
 import Form from 'next/form'
 import { Geist, Geist_Mono } from "next/font/google";
 import styles from "@/styles/Home.module.css";
-import { useEffect } from "react";
+import { FormEvent, useEffect, useState } from "react";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,6 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export default function Home() {
+  const [selectedFile, setSelectedFile] = useState<any>(null);
   useEffect(() => {
     fetch("http://localhost:3001/")
       .then((res) => {
@@ -23,6 +24,20 @@ export default function Home() {
       })
       .then((res) => { console.log(res)})
   }, [])
+
+  const submitForm = (event: FormEvent) => {
+    event.preventDefault()
+    const formData = new FormData();
+    formData.append("file", selectedFile);
+  
+    fetch('http://localhost:3001/upload-csv', { method: "POST", body: formData })
+      .then((res) => {
+        alert("File Upload success");
+        return res.text()
+      })
+      .then((res) => { console.log(res)})
+      .catch((err) => alert("File Upload Error"));
+  };
   return (
     <>
       <Head>
@@ -36,8 +51,9 @@ export default function Home() {
       >
         <main className={styles.main}>
           <h1>View and Search your CSV files here</h1>
-          <Form action="/upload">
-            <input name='csv' type='file'/>
+          <Form action="/upload" onSubmit={submitForm}>
+            <input name='csv' type='file' onChange={(e) => setSelectedFile(e.target?.files?.[0])}/>
+            <button type="submit">Submit</button>
           </Form>
           <div className={styles.ctas}>
           </div>
