@@ -20,7 +20,6 @@ export default function Home() {
   useEffect(() => {
     fetch("http://localhost:3001/")
       .then((res) => {
-        console.log(res)
         return res.text()
       })
       .then((res) => { console.log(res)})

@@ -40,8 +40,10 @@ app.get('/:id', cors(), async (req, res) => {
                 .skip(skipNumber)
                 .limit(50)
 
+    const rowCount = await Csv.countDocuments(filter)
+
     res.status(200)
-    res.send({ rows, headers: rows[0] ? Object.keys(rows[0].data) : [] })
+    res.send({ rows, headers: rows[0] ? Object.keys(rows[0].data) : [], rowCount })
 })
 const upload = multer({ dest: 'tmp/csv/' });
 
@@ -82,14 +84,8 @@ app.post('/upload-csv', cors(), upload.single('file'), async function (req, res)
             }); 
             console.log(`Parsed ${rowCount} rows`)
 
-            const rows = await Csv
-                .find({ csvId })
-                .sort({ rowNumber: 1 })
-                .skip(0)
-                .limit(50)
-
-            res.status(200)
-            res.send({ rows, csvId })
+            res.status(201)
+            res.send({ csvId })
         });
     })
 

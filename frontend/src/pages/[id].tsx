@@ -32,7 +32,7 @@ export default function Page() {
       fetch(`http://localhost:3001/${id}?page=${page}&search=${searchString}`)
         .then((res) => res.json())
         .then((res) => { 
-            setDataRows(res.rows.map(({ data }) => data))
+            setDataRows(res.rows.map(({ data }: { data: Array<any>}) => data))
             setColumns(res.headers.map((headerName: string) => columnHelper.accessor(headerName, { header: headerName, cell: info => info.getValue()})))
         })
     }, [id, searchParams])
