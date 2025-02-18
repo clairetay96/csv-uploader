@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "@tanstack/react-table": "^8.21.2",
+    "axios": "^1.7.9",
     "cors": "^2.8.5",
     "express": "^4.21.2",
     "fast-csv": "^5.0.2",

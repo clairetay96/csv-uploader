@@ -13,7 +13,7 @@ const app = express();
 const PORT = 3001;
 
 app.use(cors({
-    origin: 'http://localhost:3000/',
+    origin: 'http://localhost:3000',
     optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
   }))
 
@@ -43,14 +43,14 @@ app.get('/:id', cors(), async (req, res) => {
     const rowCount = await Csv.countDocuments(filter)
 
     res.status(200)
-    res.send({ rows, headers: rows[0] ? Object.keys(rows[0].data) : [], rowCount })
+    res.send({ rows, headers: rows[0] ? Object.keys(rows[0].data) : [], rowCount, filename: rows[0] ? Object.keys(rows[0].csvName) : []})
 })
 const upload = multer({ dest: 'tmp/csv/' });
 
 app.post('/upload-csv', cors(), upload.single('file'), async function (req, res) {
     // open uploaded file
     const filePath = req.file?.path ?? ''
-    const fileName = req.file?.filename ?? ''
+    const fileName = req.body?.filename ?? ''
     const csvId = uuidv4()
     const uploadedAt = Date.now()
 
@@ -66,27 +66,28 @@ app.post('/upload-csv', cors(), upload.single('file'), async function (req, res)
     })
 
     let rowNumber = 0
+    const createPromises: Array<Promise<any>> = []
     fs.createReadStream(path.resolve(filePath))
         .pipe(str)
         .pipe(csv.parse({ headers: true }))
-        .on('data', async (row) => { 
+        .on('data', (row) => { 
             rowNumber +=  1
             let valuesAsString = ''
             for (const x of Object.values(row)) {
                 valuesAsString += `|${x}|`
             }
-            await Csv.create({ csvName: fileName, csvId, data: row, uploadedAt, valuesAsString, rowNumber })
+            createPromises.push(Csv.create({ csvName: fileName, csvId, data: row, uploadedAt, valuesAsString, rowNumber }))
         })
-        .on('end', async (rowCount: number) => {
+        .on('end', () => {
             fs.unlink(filePath, (err) => {
                 if (err) throw err;
                 console.log('file was deleted');
             }); 
-            console.log(`Parsed ${rowCount} rows`)
-
-            res.status(201)
-            res.send({ csvId })
         });
+
+        await Promise.allSettled(createPromises)
+        res.status(201)
+        res.send({ csvId })
     })
 
 const start = async () => {
