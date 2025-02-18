@@ -42,8 +42,6 @@ app.get('/:id', cors(), async (req, res) => {
 
     res.status(200)
     res.send({ rows, headers: rows[0] ? Object.keys(rows[0].data) : [] })
-
-
 })
 const upload = multer({ dest: 'tmp/csv/' });
 
@@ -97,7 +95,8 @@ app.post('/upload-csv', cors(), upload.single('file'), async function (req, res)
 
 const start = async () => {
     await mongoose.connect(
-        "mongodb://0.0.0.0:27017/csv-uploader"
+        // "mongodb://0.0.0.0:27017/csv-uploader"
+        "mongodb+srv://clairetay96:bBfWRuz9QQ1LpFEf@cluster0.3rztf.mongodb.net/"
       ); 
     app.listen(PORT, (error) =>{
         if(!error)
