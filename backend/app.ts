@@ -9,23 +9,23 @@ import { Csv } from './models/csvs.ts'
 import { v4 as uuidv4 } from 'uuid';
 import http from 'http'
 import { Server } from 'socket.io'
+import 'dotenv/config'
 
 const ROWS_PER_PAGE = 30
 
 const app = express();
-const PORT = 5001;
 
 const server = http.createServer(app);
 
 const io = new Server(server, {
     cors: {
-      origin: "http://localhost:3000",
+      origin: process.env.FRONTEND_URL,
       methods: ["GET", "POST"]
     }
   })
 
 app.use(cors({
-    origin: 'http://localhost:3000',
+    origin: process.env.FRONTEND_URL,
     optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
   }))
 
@@ -109,9 +109,11 @@ app.post('/upload-csv', cors(), upload.single('file'), async function (req, res)
 const start = async () => {
 
     try {
-    await mongoose.connect(
-        "mongodb+srv://clairetay96:bBfWRuz9QQ1LpFEf@cluster0.3rztf.mongodb.net/"
-      );
+    if (process.env.MONGO_URI) {
+        await mongoose.connect(process.env.MONGO_URI);
+    } else {
+        throw new Error('Mongo URI is undefined')
+    }
     } catch (err) {
         console.log(err)
     }
@@ -119,7 +121,7 @@ const start = async () => {
     Csv.createIndexes()
     Csv.createCollection()
 
-    server.listen(PORT);
+    server.listen(process.env.PORT);
 }
 
 start()

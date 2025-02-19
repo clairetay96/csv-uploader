@@ -7,7 +7,7 @@ import { useRouter } from "next/router";
 import axios from 'axios';
 import { io } from 'socket.io-client'
 
-const socket = io('ws://localhost:5001')
+const socket = io(process.env.NEXT_PUBLIC_BACKEND_WS_URL)
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -51,7 +51,7 @@ export default function Home() {
     formData.append("filename", selectedFile.name)
     formData.append("socketId", socket.id ?? '')
   
-    axios.post('http://localhost:5001/upload-csv', formData, { 
+    axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}upload-csv`, formData, { 
       onUploadProgress: () => {
         setHideProgress(false)
       },

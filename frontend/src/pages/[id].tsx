@@ -57,11 +57,11 @@ export default function Page() {
   useEffect(() => {
       const searchString = searchParams.get('search') ?? ''
       const page = searchParams.get('page') ?? 1
-      if (id) {
+      if (id && process.env.NEXT_PUBLIC_BACKEND_URL) {
         if (!searchParams.get('page')) {
           createQueryString('page', '1')
         }
-        axios.get(`http://localhost:5001/${id}?page=${page}&search=${searchString}`)
+        axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}${id}?page=${page}&search=${searchString}`)
           .then((res) => { 
               setDataRows(res.data.rows.map(({ data }: { data: Array<object> }) => data))
               setColumns(res.data.headers.map((headerName: string) => columnHelper.accessor(headerName, { header: headerName, cell: info => info.getValue()})))

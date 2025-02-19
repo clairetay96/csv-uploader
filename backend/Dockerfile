@@ -13,7 +13,6 @@ RUN npm install
 # Copy other files to my current directory
 COPY . .
 
-
 # Open the port for the express server
 EXPOSE 5001
 
