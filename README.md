@@ -49,4 +49,7 @@ Ensure you are running on node 18 and npm 8.
 
 The frontend runs on `http://localhost:3000` while the backend is on `http://localhost:5001`
 
-## Developer's Notes
+## Troubleshooting
+
+If you run into issues when starting up the services, try deleting the `node_modules` folder and/or the `package-lock.json` file.
+Otherwise, check that the .env variables are correctly configured.

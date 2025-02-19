@@ -2,14 +2,14 @@ import express from 'express'
 import cors from 'cors'
 import multer from 'multer'
 import mongoose from 'mongoose'
-import { Csv } from './models/csvs.ts'
+import { Csv } from './models/csvs'
 import http from 'http'
 import { Server } from 'socket.io'
 import 'dotenv/config'
 import { csvRow, csvFile } from './controllers'
 
 // Express App
-const app = express();
+export const app = express();
 const server = http.createServer(app);
 
 const io = new Server(server, {
