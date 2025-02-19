@@ -52,9 +52,6 @@ export default function Home() {
     formData.append("socketId", socket.id ?? '')
   
     axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}upload-csv`, formData, { 
-      onUploadProgress: () => {
-        setHideProgress(false)
-      },
       headers: {"Content-Type": "multipart/form-data"}
     })
       .then((res) => { 

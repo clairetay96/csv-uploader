@@ -6,6 +6,32 @@ This application allows a user to upload a CSV, then view and search the uploade
 
 ## How to run
 
+### Configure Mongo and .env variables
+
+Set the following .env variables in the root `.env` file.
+
+```
+MONGODB_USER = <YOUR_MONGO_USERNAME>
+MONGODB_PASSWORD = <YOUR_MONGO_PASSWORD>
+MONGODB_DATABASE = <YOUR_TARGET_DB>
+MONGODB_DOCKER_PORT = 27017
+```
+
+Set the following .env variables in the frontend `.env.local` file:
+
+```
+NEXT_PUBLIC_BACKEND_URL='http://localhost:5001/'
+NEXT_PUBLIC_BACKEND_WS_URL='ws://localhost:5001/'
+```
+
+Set the following .env variables in the backend `.env` file.
+
+```
+MONGO_URI=<YOUR_MONGO_CONNECTION_URI>
+PORT='5001'
+FRONTEND_URL='http://localhost:3000'
+```
+
 ### Using Docker:
 
 Ensure you have docker installed and docker daemon running. In the root directory of the repo, run this command:
@@ -24,5 +50,3 @@ Ensure you are running on node 18 and npm 8.
 The frontend runs on `http://localhost:3000` while the backend is on `http://localhost:5001`
 
 ## Developer's Notes
-
-
