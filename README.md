@@ -4,6 +4,8 @@
 
 This application allows a user to upload a CSV, then view and search the uploaded CSV's rows in a paginated table in the browser.
 
+https://github.com/user-attachments/assets/3142607e-7548-4339-bccd-c5081a36016f
+
 ## How to run
 
 ### Configure Mongo and .env variables
