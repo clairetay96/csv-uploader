@@ -10,6 +10,19 @@ import {
     useReactTable,
   } from '@tanstack/react-table'
 import Link from 'next/link';
+
+const ROWS_PER_PAGE = 30
+
+const buttonStyling = { 
+  display: 'inline-flex', 
+  width: '50px', 
+  height: '30px', 
+  fontSize: '30px', 
+  margin: '10px', 
+  alignItems: 'center', 
+  justifyContent: 'center', 
+  cursor: 'pointer'
+}
  
 export default function Page() {
   const [dataRows, setDataRows] = useState()
@@ -19,7 +32,7 @@ export default function Page() {
   const [id, setId] = useState<string>()
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  
+
   const router = useRouter()
   
 
@@ -29,8 +42,6 @@ export default function Page() {
     }
   }, [router])
   
-  const columnHelper = createColumnHelper()
-
   // Get a new searchParams string by merging the current
   // searchParams with a provided key/value pair
   const createQueryString = useCallback(
@@ -42,6 +53,7 @@ export default function Page() {
     [searchParams]
   )
 
+  const columnHelper = createColumnHelper()
   useEffect(() => {
       const searchString = searchParams.get('search') ?? ''
       const page = searchParams.get('page') ?? 1
@@ -49,7 +61,7 @@ export default function Page() {
         if (!searchParams.get('page')) {
           createQueryString('page', '1')
         }
-        axios.get(`http://localhost:3001/${id}?page=${page}&search=${searchString}`)
+        axios.get(`http://localhost:5001/${id}?page=${page}&search=${searchString}`)
           .then((res) => { 
               setDataRows(res.data.rows.map(({ data }: { data: Array<object> }) => data))
               setColumns(res.data.headers.map((headerName: string) => columnHelper.accessor(headerName, { header: headerName, cell: info => info.getValue()})))
@@ -57,42 +69,42 @@ export default function Page() {
               setFilename(res.data.filename)
           })
       }
-    }, [id, searchParams])
+  }, [id, searchParams])
 
-    const onSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
-      createQueryString('search', e.target.value) 
-    }
+  const onSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
+    createQueryString('search', e.target.value) 
+  }
 
-    const onNextClick = () => {
-      const page = Number(searchParams.get('page')) ?? 1
-      const nextPage = page + 1
-      createQueryString('page', nextPage.toString())
-    }
+  const onNextClick = () => {
+    const page = Number(searchParams.get('page')) ?? 1
+    const nextPage = page + 1
+    createQueryString('page', nextPage.toString())
+  }
 
-    const onPrevClick = () => {
-      const page = Number(searchParams.get('page')) ?? 1
-      const prevPage = page - 1
-      createQueryString('page', prevPage.toString())
-    }
+  const onPrevClick = () => {
+    const page = Number(searchParams.get('page')) ?? 1
+    const prevPage = page - 1
+    createQueryString('page', prevPage.toString())
+  }
 
-    const onFirstClick = () => {
-      createQueryString('page', '1')
-    }
+  const onFirstClick = () => {
+    createQueryString('page', '1')
+  }
 
-    const onLastClick = () => {
-      createQueryString('page', Math.ceil(rowCount / 50).toString())
-    }
+  const onLastClick = () => {
+    createQueryString('page', Math.ceil(rowCount / ROWS_PER_PAGE).toString())
+  }
 
-    const table = useReactTable({
-        data: dataRows ?? [],
-        columns: columns ?? [],
-        getCoreRowModel: getCoreRowModel(),
-        manualPagination: true,
-      })
+  const table = useReactTable({
+      data: dataRows ?? [],
+      columns: columns ?? [],
+      getCoreRowModel: getCoreRowModel(),
+      manualPagination: true,
+    })
 
-      if (id && !dataRows) {
-        return (<div style={{ margin: '50px'}}><ClipLoader loading={true} size={100} color='white'/></div>)
-      }
+  if (id && !dataRows) {
+    return (<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}><ClipLoader loading={true} size={100} color='white'/></div>)
+  }
 
   return (
   <div>
@@ -134,35 +146,35 @@ export default function Page() {
       <div style={{margin: '10px 15px 10px 10px', display: 'flex', justifyContent: 'space-between',  alignItems: 'center'}}>
         <div>
       <button
-            style={{ display: 'inline-flex', width: '50px', height: '30px', fontSize: '30px', margin: '10px', alignItems: 'center', justifyContent: 'center', cursor: 'pointer'}}
+            style={buttonStyling}
             onClick={onFirstClick}
             disabled={searchParams.get('page') === '1'}
           >
             {'<<'}
           </button>
         <button
-            style={{ display: 'inline-flex', width: '50px', height: '30px', fontSize: '30px', margin: '10px', alignItems: 'center', justifyContent: 'center', cursor: 'pointer'}}
+            style={buttonStyling}
             onClick={onPrevClick}
             disabled={searchParams.get('page') === '1'}
           >
             {'<'}
           </button>
           <button
-            style={{ display: 'inline-flex', width: '50px', height: '30px', fontSize: '30px', margin: '10px', alignItems: 'center', justifyContent: 'center',  cursor: 'pointer'}}
+            style={buttonStyling}
             onClick={onNextClick} 
-            disabled={Number(searchParams.get('page')) >= rowCount / 50}
+            disabled={Number(searchParams.get('page')) >= rowCount / ROWS_PER_PAGE}
             >
             {'>'}
           </button>
           <button
-            style={{ display: 'inline-flex', width: '50px', height: '30px', fontSize: '30px', margin: '10px', alignItems: 'center', justifyContent: 'center',  cursor: 'pointer'}}
+            style={buttonStyling}
             onClick={onLastClick} 
-            disabled={Number(searchParams.get('page')) >= rowCount / 50}
+            disabled={Number(searchParams.get('page')) >= rowCount / ROWS_PER_PAGE}
             >
             {'>>'}
           </button>
           </div>
-          <div> Page {searchParams.get('page')} of {Math.ceil(rowCount / 50)}</div>
+          <div> Page {searchParams.get('page')} of {Math.ceil(rowCount / ROWS_PER_PAGE)}</div>
         </div>
         <div style={{margin: '15px'}}>
           <Link href='/' style={{ cursor: 'pointer', }}><u>Back to home</u></Link>

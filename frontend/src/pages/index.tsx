@@ -7,7 +7,7 @@ import { useRouter } from "next/router";
 import axios from 'axios';
 import { io } from 'socket.io-client'
 
-const socket = io('ws://localhost:3001')
+const socket = io('ws://localhost:5001')
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -23,24 +23,17 @@ export default function Home() {
   const [selectedFile, setSelectedFile] = useState<File>();
   const [uploadProgress, setUploadProgress] = useState<number>()
   const [hideProgress, setHideProgress] = useState<boolean>(true)
-  useEffect(() => {
-    axios.get("http://localhost:3001/")
-      .then((res) => {
-        console.log(res)
-      })
-  }, [])
 
+  console.log(socket.id)
 
   useEffect(() => {
     function onUploadProgress(value: { uploadProgress: number }) {
-      console.log('upload progress event....')
-      console.log(value)
       setHideProgress(false)
       setUploadProgress(value.uploadProgress);
     }
     socket.on('uploadProgress', onUploadProgress);
     return () => {
-      socket.off('foo', onUploadProgress);
+      socket.off('uploadProgress', onUploadProgress);
     };
   }, []);
 
@@ -58,7 +51,7 @@ export default function Home() {
     formData.append("filename", selectedFile.name)
     formData.append("socketId", socket.id ?? '')
   
-    axios.post('http://localhost:3001/upload-csv', formData, { 
+    axios.post('http://localhost:5001/upload-csv', formData, { 
       onUploadProgress: () => {
         setHideProgress(false)
       },

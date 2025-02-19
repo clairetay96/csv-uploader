@@ -10,8 +10,10 @@ import { v4 as uuidv4 } from 'uuid';
 import http from 'http'
 import { Server } from 'socket.io'
 
+const ROWS_PER_PAGE = 30
+
 const app = express();
-const PORT = 3001;
+const PORT = 5001;
 
 const server = http.createServer(app);
 
@@ -21,22 +23,18 @@ const io = new Server(server, {
       methods: ["GET", "POST"]
     }
   })
-io.on('connection', (socket) => { 
-    socket.on('disconnect', () => { /* … */ });
- });
-
 
 app.use(cors({
     origin: 'http://localhost:3000',
     optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
   }))
 
-app.use(function(req, res, next){
+app.use(function(_, res, next){
     res.io = io;
     next();
 });
 
-app.get('/', cors(), (req, res)=>{
+app.get('/', cors(), (_, res)=>{
     res.status(200);
     res.send("Welcome to root URL of Server");
 });
@@ -51,21 +49,21 @@ app.get('/:id', cors(), async (req, res) => {
         filter['$text'] = { $search : search }
     }
 
-    const skipNumber = isNaN(Number(page)) ? 0 : (Number(page) - 1) * 50
+    const skipNumber = isNaN(Number(page)) ? 0 : (Number(page) - 1) * ROWS_PER_PAGE
 
     const rows = await Csv
                 .find(filter)
                 .sort({ rowNumber: 1 })
                 .skip(skipNumber)
-                .limit(50)
+                .limit(ROWS_PER_PAGE)
 
     const rowCount = await Csv.countDocuments(filter)
 
     res.status(200)
     res.send({ rows, headers: rows[0] ? Object.keys(rows[0].data) : [], rowCount, filename: rows[0] ? rows[0].csvName : []})
 })
-const upload = multer({ dest: 'tmp/csv/' });
 
+const upload = multer({ dest: 'tmp/csv/' });
 app.post('/upload-csv', cors(), upload.single('file'), async function (req, res) {
     // open uploaded file
     const filePath = req.file?.path ?? ''
@@ -106,23 +104,22 @@ app.post('/upload-csv', cors(), upload.single('file'), async function (req, res)
             res.status(201)
             res.send({ csvId })
         });
-    })
+})
 
 const start = async () => {
+
+    try {
     await mongoose.connect(
-        // "mongodb://0.0.0.0:27017/csv-uploader"
         "mongodb+srv://clairetay96:bBfWRuz9QQ1LpFEf@cluster0.3rztf.mongodb.net/"
-      ); 
+      );
+    } catch (err) {
+        console.log(err)
+    }
+
+    Csv.createIndexes()
+    Csv.createCollection()
 
     server.listen(PORT);
-    // app.listen(PORT, (error) =>{
-    //     if(!error)
-    //         {console.log("Server is Successfully Running, and App is listening on port "+ PORT) }
-    //     else 
-    //         {console.log("Error occurred, server can't start", error)}
-    //     }
-    // )
-
 }
 
 start()

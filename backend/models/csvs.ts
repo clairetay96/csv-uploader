@@ -30,8 +30,3 @@ CsvRowSchema.index({ valuesAsString: 'text'})
 CsvRowSchema.index({ csvId: 1 })
 
 export const Csv = mongoose.model("Csv", CsvRowSchema);
-Csv.createIndexes()
-// Create collection of Model 
-Csv.createCollection().then(function () { 
-  console.log('Collection is created!'); 
-});
