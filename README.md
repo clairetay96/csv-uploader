@@ -53,3 +53,5 @@ The frontend runs on `http://localhost:3000` while the backend is on `http://loc
 
 If you run into issues when starting up the services, try deleting the `node_modules` folder and/or the `package-lock.json` file.
 Otherwise, check that the .env variables are correctly configured.
+
+If `docker compose up` does not work, try `docker compose -f 'docker-compose.yml' up -d --build`
