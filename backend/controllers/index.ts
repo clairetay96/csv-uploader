@@ -43,11 +43,15 @@ export const csvFile = {
                     res.io.to(req.body.socketId).emit('uploadProgress', {uploadProgress: (fulfilledCount + rejectedCount)/allPromises} )
                     await new Promise(resolve => setTimeout(resolve, 100))
                 }
+
+                if (rejectedCount > 0) {
+                    throw new Error(`File upload error - failed to upload ${rejectedCount} rows. Please try again.`)
+                }
     
                 await Promise.allSettled(createPromises)
                 res.status(201)
                 res.send({ csvId })
-            });
+            })
     }
 }
 
@@ -63,15 +67,30 @@ export const csvRow = {
     
         const skipNumber = isNaN(Number(page)) ? 0 : (Number(page) - 1) * ROWS_PER_PAGE
     
-        const rows = await Csv
-                    .find(filter)
-                    .sort({ rowNumber: 1 })
-                    .skip(skipNumber)
-                    .limit(ROWS_PER_PAGE)
-    
-        const rowCount = await Csv.countDocuments(filter)
+        let rows = []
+        let rowCount = 0
+        let sampleData;
+        try {
+            rows = await Csv
+                        .find(filter)
+                        .sort({ rowNumber: 1 })
+                        .skip(skipNumber)
+                        .limit(ROWS_PER_PAGE)
+        
+            rowCount = await Csv.countDocuments(filter)
+            // To get headers and csvName
+            sampleData = await Csv.findOne({ csvId })
+        } catch (err) {
+            throw new Error(`Error ${err}`)
+        }
     
         res.status(200)
-        res.send({ rows, headers: rows[0] ? Object.keys(rows[0].data) : [], rowCount, filename: rows[0] ? rows[0].csvName : []})
+
+        if (!sampleData) {
+            res.send({ rows, headers: [], rowCount, filename: '' })
+        } else {
+            res.send({ rows, headers: Object.keys(sampleData.data), rowCount, filename: sampleData.csvName })
+        }
+        
     }
 }
