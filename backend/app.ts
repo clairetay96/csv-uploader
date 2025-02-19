@@ -5,17 +5,36 @@ import multer from 'multer'
 import * as path from 'path'
 import * as csv from 'fast-csv'
 import mongoose from 'mongoose'
-import progress from 'progress-stream'
 import { Csv } from './models/csvs.ts'
 import { v4 as uuidv4 } from 'uuid';
+import http from 'http'
+import { Server } from 'socket.io'
 
 const app = express();
 const PORT = 3001;
+
+const server = http.createServer(app);
+
+const io = new Server(server, {
+    cors: {
+      origin: "http://localhost:3000",
+      methods: ["GET", "POST"]
+    }
+  })
+io.on('connection', (socket) => { 
+    socket.on('disconnect', () => { /* … */ });
+ });
+
 
 app.use(cors({
     origin: 'http://localhost:3000',
     optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
   }))
+
+app.use(function(req, res, next){
+    res.io = io;
+    next();
+});
 
 app.get('/', cors(), (req, res)=>{
     res.status(200);
@@ -43,7 +62,7 @@ app.get('/:id', cors(), async (req, res) => {
     const rowCount = await Csv.countDocuments(filter)
 
     res.status(200)
-    res.send({ rows, headers: rows[0] ? Object.keys(rows[0].data) : [], rowCount, filename: rows[0] ? Object.keys(rows[0].csvName) : []})
+    res.send({ rows, headers: rows[0] ? Object.keys(rows[0].data) : [], rowCount, filename: rows[0] ? rows[0].csvName : []})
 })
 const upload = multer({ dest: 'tmp/csv/' });
 
@@ -54,21 +73,11 @@ app.post('/upload-csv', cors(), upload.single('file'), async function (req, res)
     const csvId = uuidv4()
     const uploadedAt = Date.now()
 
-    const stat = fs.statSync(path.resolve(filePath))
-    var str = progress({
-        length: stat.size,
-        time: 100 /* ms */
-    });
-
-    str.on('progress', function(progress) {
-        // publish event on progress
-        console.log(progress)
-    })
-
     let rowNumber = 0
+    let fulfilledCount = 0
+    let rejectedCount = 0
     const createPromises: Array<Promise<any>> = []
     fs.createReadStream(path.resolve(filePath))
-        .pipe(str)
         .pipe(csv.parse({ headers: true }))
         .on('data', (row) => { 
             rowNumber +=  1
@@ -76,18 +85,27 @@ app.post('/upload-csv', cors(), upload.single('file'), async function (req, res)
             for (const x of Object.values(row)) {
                 valuesAsString += `|${x}|`
             }
-            createPromises.push(Csv.create({ csvName: fileName, csvId, data: row, uploadedAt, valuesAsString, rowNumber }))
+            createPromises.push(
+                Csv.create({ csvName: fileName, csvId, data: row, uploadedAt, valuesAsString, rowNumber })
+                .then(() => { fulfilledCount += 1 })
+                .catch(() => { rejectedCount += 1 })
+            )
         })
-        .on('end', () => {
+        .on('end', async () => {
             fs.unlink(filePath, (err) => {
                 if (err) throw err;
-                console.log('file was deleted');
             }); 
-        });
 
-        await Promise.allSettled(createPromises)
-        res.status(201)
-        res.send({ csvId })
+            const allPromises = createPromises.length
+            while (fulfilledCount + rejectedCount < allPromises) {
+                res.io.to(req.body.socketId).emit('uploadProgress', {uploadProgress: (fulfilledCount + rejectedCount)/allPromises} )
+                await new Promise(res => setTimeout(res, 1000))
+            }
+
+            await Promise.allSettled(createPromises)
+            res.status(201)
+            res.send({ csvId })
+        });
     })
 
 const start = async () => {
@@ -95,13 +113,15 @@ const start = async () => {
         // "mongodb://0.0.0.0:27017/csv-uploader"
         "mongodb+srv://clairetay96:bBfWRuz9QQ1LpFEf@cluster0.3rztf.mongodb.net/"
       ); 
-    app.listen(PORT, (error) =>{
-        if(!error)
-            {console.log("Server is Successfully Running, and App is listening on port "+ PORT) }
-        else 
-            {console.log("Error occurred, server can't start", error)}
-        }
-    )
+
+    server.listen(PORT);
+    // app.listen(PORT, (error) =>{
+    //     if(!error)
+    //         {console.log("Server is Successfully Running, and App is listening on port "+ PORT) }
+    //     else 
+    //         {console.log("Error occurred, server can't start", error)}
+    //     }
+    // )
 
 }
 

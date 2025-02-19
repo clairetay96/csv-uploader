@@ -1,6 +1,7 @@
 import { useRouter } from 'next/router'
 import {  useEffect, useState, useCallback, ChangeEvent } from "react";
 import { useSearchParams, usePathname } from 'next/navigation'
+import ClipLoader from "react-spinners/ClipLoader";
 import axios from 'axios'
 import {
     createColumnHelper,
@@ -8,11 +9,13 @@ import {
     getCoreRowModel,
     useReactTable,
   } from '@tanstack/react-table'
+import Link from 'next/link';
  
 export default function Page() {
-  const [dataRows, setDataRows] = useState([])
+  const [dataRows, setDataRows] = useState()
   const [columns, setColumns] = useState([])
   const [rowCount, setRowCount] = useState(0)
+  const [filename, setFilename] = useState()
   const [id, setId] = useState<string>()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -48,15 +51,16 @@ export default function Page() {
         }
         axios.get(`http://localhost:3001/${id}?page=${page}&search=${searchString}`)
           .then((res) => { 
-              setDataRows(res.data.rows.map(({ data }: { data: Array<any> }) => data))
+              setDataRows(res.data.rows.map(({ data }: { data: Array<object> }) => data))
               setColumns(res.data.headers.map((headerName: string) => columnHelper.accessor(headerName, { header: headerName, cell: info => info.getValue()})))
               setRowCount(res.data.rowCount)
+              setFilename(res.data.filename)
           })
       }
     }, [id, searchParams])
 
     const onSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
-      createQueryString('search', e.target.value)
+      createQueryString('search', e.target.value) 
     }
 
     const onNextClick = () => {
@@ -69,7 +73,14 @@ export default function Page() {
       const page = Number(searchParams.get('page')) ?? 1
       const prevPage = page - 1
       createQueryString('page', prevPage.toString())
+    }
 
+    const onFirstClick = () => {
+      createQueryString('page', '1')
+    }
+
+    const onLastClick = () => {
+      createQueryString('page', Math.ceil(rowCount / 50).toString())
     }
 
     const table = useReactTable({
@@ -79,12 +90,17 @@ export default function Page() {
         manualPagination: true,
       })
 
+      if (id && !dataRows) {
+        return (<div style={{ margin: '50px'}}><ClipLoader loading={true} size={100} color='white'/></div>)
+      }
+
   return (
   <div>
-    <div style={{margin: '10px'}}>
-      <h2>Search</h2>
-      <input type="text" name="search" onChange={onSearchChange} value={searchParams.get('search') ?? ''}></input>
+    <div style={{margin: '10px 30px 10px 10px', display: 'flex', justifyContent: 'space-between'}}>
+      <h1>{filename}</h1>
+      <input type="text" name="search" onChange={onSearchChange} value={searchParams.get('search') ?? ''} placeholder='Enter search text here' style={{ width: '300px', height: '30px', padding: '5px'}}></input>
     </div>
+    <div style={{ margin: '15px'}}>
     <table>
         <thead>
           {table.getHeaderGroups().map(headerGroup => (
@@ -114,19 +130,42 @@ export default function Page() {
           ))}
         </tbody>
       </table>
-      <div style={{margin: '10px'}}>
+      </div>
+      <div style={{margin: '10px 15px 10px 10px', display: 'flex', justifyContent: 'space-between',  alignItems: 'center'}}>
+        <div>
+      <button
+            style={{ display: 'inline-flex', width: '50px', height: '30px', fontSize: '30px', margin: '10px', alignItems: 'center', justifyContent: 'center', cursor: 'pointer'}}
+            onClick={onFirstClick}
+            disabled={searchParams.get('page') === '1'}
+          >
+            {'<<'}
+          </button>
         <button
+            style={{ display: 'inline-flex', width: '50px', height: '30px', fontSize: '30px', margin: '10px', alignItems: 'center', justifyContent: 'center', cursor: 'pointer'}}
             onClick={onPrevClick}
             disabled={searchParams.get('page') === '1'}
           >
             {'<'}
           </button>
           <button
+            style={{ display: 'inline-flex', width: '50px', height: '30px', fontSize: '30px', margin: '10px', alignItems: 'center', justifyContent: 'center',  cursor: 'pointer'}}
             onClick={onNextClick} 
-            disabled={Number(searchParams.get('page')) > rowCount / 50}
+            disabled={Number(searchParams.get('page')) >= rowCount / 50}
             >
             {'>'}
           </button>
+          <button
+            style={{ display: 'inline-flex', width: '50px', height: '30px', fontSize: '30px', margin: '10px', alignItems: 'center', justifyContent: 'center',  cursor: 'pointer'}}
+            onClick={onLastClick} 
+            disabled={Number(searchParams.get('page')) >= rowCount / 50}
+            >
+            {'>>'}
+          </button>
+          </div>
+          <div> Page {searchParams.get('page')} of {Math.ceil(rowCount / 50)}</div>
+        </div>
+        <div style={{margin: '15px'}}>
+          <Link href='/' style={{ cursor: 'pointer', }}><u>Back to home</u></Link>
         </div>
   </div>)
 }
